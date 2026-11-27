@@ -122,6 +122,13 @@ main{flex:1 1 auto;min-height:0;overflow:auto;max-width:none;width:100%;margin:0
 @media(max-width:1279px){.mwk{font-size:min(1.5vw,1.25vh)}}
 @media(max-width:599px){.homewrap{overflow:visible}.menu8{overflow:visible}.mwk{font-size:12px}.mu{overflow:visible}}
 
+/* Track J menu: five columns */
+.tabs{display:inline-flex;gap:6px}
+.menu8.j5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.menu8.j5 .mwk{font-size:min(1.25vw,2.1vh)}
+.menu8.j5 .mu .t{font-size:1em}
+@media(max-width:1279px){.menu8.j5{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:none;overflow:auto;align-content:start}.menu8.j5 .mwk{font-size:13px}.menu8.j5 .mu{flex:none;min-height:2.6em}}
+@media(max-width:599px){.menu8.j5{grid-template-columns:repeat(1,minmax(0,1fr))}.menu8.j5 .mwk{font-size:13px}}
 /* fit-to-screen pages: graphics scale to the space left, no scrolling */
 main.fit{overflow:hidden;display:flex;flex-direction:column;padding-top:6px;padding-bottom:8px}
 main.fit .wkl{display:none}
@@ -214,12 +221,17 @@ function done(u){return simDone(u)&&labDone(u)&&tbDone(u)&&quizDone(u)}
 function open_(i){return REVIEW||(typeof STAFF!=='undefined'&&STAFF)||i===0||UNITS[i].first||done(UNITS[i-1])}
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 function go(id,step){if(id===undefined){home();return}view(id,step||0)}
+let HOMETAB='w';
+const JGRP={J1:'Daily user support',J2:'Authorization troubleshooting',J3:'Role changes',J4:'Fiori support',J5:'GRC and access operations'};
 function home(){
   $('#crumb').textContent='Weeks 0 to 8 and Track J';
-  let h=`<div class="homewrap"><div class="mintro"><h1>Pick a unit</h1><span class="small mut">Learn, simulate, analyse, teach back, quiz. Finish a unit to unlock the next.</span><span class="mleg"><i class="lb"></i>No simulated screens <i class="lg"></i>With simulated screens</span><button class="btn sec" onclick="docs('guide')">User guide</button></div><div class="menu8">`;
+  const isJ=HOMETAB==='j';
+  let h=`<div class="homewrap"><div class="mintro"><h1>Pick a unit</h1><span class="tabs"><button class="btn ${isJ?'sec':''}" onclick="HOMETAB='w';home()">Weeks 0 to 8 (54)</button><button class="btn ${isJ?'':'sec'}" onclick="HOMETAB='j';home()">Track J: support (37)</button></span><span class="small mut">${isJ?'For junior and intermediate consultants: daily support and troubleshooting. Starts here, separate from Weeks 0 to 8.':'Learn, simulate, analyse, teach back, quiz. Finish a unit to unlock the next.'}</span><span class="mleg"><i class="lb"></i>No simulated screens <i class="lg"></i>With simulated screens</span><button class="btn sec" onclick="docs('guide')">User guide</button></div><div class="menu8${isJ?' j5':''}">`;
   let wk=null;
   UNITS.forEach((u,i)=>{
-    if(u.wk!==wk){if(wk!==null)h+='</div>';wk=u.wk;h+=`<div class="mwk"><h4>${esc(wk)}</h4>${/^Week 8/.test(wk)?'<div class="lead">Lead only. Seniors may skip.</div>':/^Track J/.test(wk)?'<div class="lead">For junior and intermediate consultants. Daily support and troubleshooting. Starts here, separate from Weeks 0 to 8.</div>':''}`}
+    const uj=/^J/.test(u.id);if(uj!==isJ)return;
+    const key=uj?u.id.split('.')[0]:u.wk;
+    if(key!==wk){if(wk!==null)h+='</div>';wk=key;h+=`<div class="mwk"><h4>${esc(uj?key+': '+JGRP[key]:wk)}</h4>${/^Week 8/.test(wk)?'<div class="lead">Lead only. Seniors may skip.</div>':''}`}
     const o=open_(i),d=done(u);const cv=(u.sim&&u.sim.length)?'cg':'';
     const parts=[simDone(u)?1:0,labDone(u)?1:0,tbDone(u)?1:0,quizDone(u)?1:0].reduce((a,b)=>a+b,0);
     h+=`<div class="mu ${cv} ${d?'done':''} ${o?'':'lock'}" title="${esc(u.title)}" ${o?`onclick="go('${u.id}')"`:''}><span class="n">${d?'✓':u.id}</span><span class="t">${esc(u.title)}</span><span class="st">${o?(d?'':parts+'/4'):'🔒'}</span></div>`;
@@ -230,6 +242,7 @@ function home(){
 }
 function view(id,step){
   const u=UNITS.find(x=>x.id===id),i=UNITS.indexOf(u);
+  HOMETAB=/^J/.test(id)?'j':'w';
   if(!open_(i)){home();return}
   $('#crumb').textContent='Unit '+u.id;
   const names=['1 Learn','2 Simulate','3 Analyse','4 Teach back','5 Quiz'];
